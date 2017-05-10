@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Insert title here</title>
+</head>
+<body>
+  <h2>計算入力画面</h2>
+  IW14A703 浅田正雄
+  <hr/>
+  ■Servletに送信<br/>
+  <form action="CalcServlet">
+    <br/>値１：<input type="text" name="atai1"/><br/>
+    <input type="radio" name="keisan" value="1" checked/>＋&nbsp;&nbsp;
+    <input type="radio" name="keisan" value="2"/>－&nbsp;&nbsp;
+    <input type="radio" name="keisan" value="3"/>×&nbsp;&nbsp;
+    <input type="radio" name="keisan" value="4"/>÷&nbsp;&nbsp;
+    <input type="radio" name="keisan" value="5"/>余り&nbsp;&nbsp;
+    <input type="radio" name="keisan" value="6"/>累乗
+    <br/>値２：<input type="text" name="atai2"/><br/><br/>
+    <input type="submit" value="答えは次の画面"/>
+  </form>
+</body>
+</html>
