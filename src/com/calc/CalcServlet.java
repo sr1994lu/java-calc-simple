@@ -1,7 +1,11 @@
 package com.calc;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -20,66 +24,139 @@ public class CalcServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request,
       HttpServletResponse response)
       throws ServletException, IOException {
-    int calcParam1 = Integer.parseInt(request.getParameter("atai1"));
-    int calcParam2 = Integer.parseInt(request.getParameter("atai2"));
-    String arithmeticOperationParam = request.getParameter("keisan");
-    double calcParamResult = 0;
-    String exceptionComment;
-
-    // communicate the result of authentication
     ServletContext sc = getServletContext();
+    double calcParamResult = 0;
+    List<String> exceptionComment = new ArrayList<>();
     boolean arithmeticDone = false;
+    // communicate the result of authentication
+    String OptNullabbleCalcParam1 = hasAtai(request, "atai1").orElse("");
+    String OptNullabbleCalcParam2 = hasAtai(request, "atai2").orElse("");
     try {
-      switch (serchArithmeticOperation(arithmeticOperationParam)) {
-        case "addition":
-          calcParamResult = calcParam1 + calcParam2;
-          break;
-        case "subtraction":
-          calcParamResult = calcParam1 - calcParam2;
-          break;
-        case "multiplication":
-          calcParamResult = calcParam1 * calcParam2;
-          break;
-        case "division":
-          if (calcParam2 == 0) {
-            throw new ArithmeticException();
-          } else {
-            calcParamResult = calcParam1 / calcParam2;
-          }
-          break;
-        case "remainder":
-          if (calcParam2 == 0) {
-            throw new ArithmeticException();
-          } else {
-            calcParamResult = calcParam1 % calcParam2;
-          }
-          break;
-        case "exponentiation":
-          calcParamResult = Math.pow(calcParam1, calcParam2);
-          break;
-      }
-      arithmeticDone = true;
-    } catch (NullPointerException e) {
-      exceptionComment = "値1は存在しません: " + e.getMessage();
-      request.setAttribute("comment", exceptionComment);
-    } catch (NumberFormatException e) {
-      exceptionComment = "値1は数値化できません: " + e.getMessage();
-      request.setAttribute("comment", exceptionComment);
-    } catch (ArithmeticException e) {
-      exceptionComment = "0除算はできません";
-      request.setAttribute("comment", exceptionComment);
-    } catch (Exception e) {
-      exceptionComment = "予期せぬ例外が発生しました: " + e.getMessage();
-      request.setAttribute("comment", exceptionComment);
-    } finally {
-      request.setAttribute("atai1", String.valueOf(calcParam1));
-      request.setAttribute("atai2", String.valueOf(calcParam2));
-      request.setAttribute("kigou", arithmeticOperationParam);
+      if (!hasAtai(request, "atai1").isPresent()
+          && !hasAtai(request, "atai2").isPresent()) {
+        // do not have textboxes
+        exceptionComment.add("値1のテキストボックスが存在しません");
+        exceptionComment.add("値2のテキストボックスが存在しません");
+        throw new NullPointerException();
 
+      } else if (!hasAtai(request, "atai1").isPresent()) {
+        // do not have textbox
+        exceptionComment.add("値1のテキストボックスが存在しません");
+        throw new NullPointerException();
+
+      } else if (!hasAtai(request, "atai2").isPresent()) {
+        // do not have textbox
+        exceptionComment.add("値2のテキストボックスが存在しません");
+        throw new NullPointerException();
+
+      } else {
+        // have textbox
+        if (Objects.equals(OptNullabbleCalcParam1, "")
+            && Objects.equals(OptNullabbleCalcParam2, "")) {
+          // not yet entered
+          exceptionComment.add("値1のテキストボックスが未入力です");
+          exceptionComment.add("値2のテキストボックスが未入力です");
+
+        } else if (Objects.equals(OptNullabbleCalcParam1, "")) {
+          // not yet entered
+          exceptionComment.add("値1のテキストボックスが未入力です");
+
+        } else if (Objects.equals(OptNullabbleCalcParam2, "")) {
+          // not yet entered
+          exceptionComment.add("値2のテキストボックスが未入力です");
+
+        }
+
+        // entered
+        Pattern p = Pattern.compile("^([1-9]\\d*|0)(\\.\\d+)?$");
+        if (!p.matcher(OptNullabbleCalcParam1).find()
+            && !p.matcher(OptNullabbleCalcParam2).find()) {
+          // cannot be numerical
+          exceptionComment.add("値1は数値化できません");
+          exceptionComment.add("値2は数値化できません");
+          throw new NumberFormatException();
+
+        } else if (!p.matcher(OptNullabbleCalcParam1).find()) {
+          // cannot be numerical
+          exceptionComment.add("値1は数値化できません");
+          throw new NumberFormatException();
+
+        } else if (!p.matcher(OptNullabbleCalcParam2).find()) {
+          // cannot be numerical
+          exceptionComment.add("値2は数値化できません");
+          throw new NumberFormatException();
+
+        } else {
+          // can be numerical
+          Optional<String> OptArithmeticOperationParam = Optional
+              .of(request.getParameter("keisan"));
+          double calcParam1 = Double.parseDouble(OptNullabbleCalcParam1);
+          double calcParam2 = Double.parseDouble(OptNullabbleCalcParam2);
+          String arithmeticOperationParam = OptArithmeticOperationParam.get();
+          String calcSign = serchArithmeticOperation(arithmeticOperationParam);
+
+          // start calculation
+          switch (calcSign) {
+            case "addition":
+              calcParamResult = calcParam1 + calcParam2;
+              arithmeticDone = true;
+              break;
+            case "subtraction":
+              calcParamResult = calcParam1 - calcParam2;
+              arithmeticDone = true;
+              break;
+            case "multiplication":
+              calcParamResult = calcParam1 * calcParam2;
+              arithmeticDone = true;
+              break;
+            case "division":
+              calcParamResult = calcParam1 / calcParam2;
+              arithmeticDone = true;
+              if (Double.isInfinite(calcParamResult) || Double.isNaN(calcParamResult)) {
+                exceptionComment.add("0除算はできません");
+                arithmeticDone = false;
+                break;
+              } else {
+                break;
+              }
+            case "remainder":
+              calcParamResult = calcParam1 % calcParam2;
+              arithmeticDone = true;
+              if (Double.isInfinite(calcParamResult) || Double.isNaN(calcParamResult)) {
+                exceptionComment.add("0除算はできません");
+                arithmeticDone = false;
+                break;
+              } else {
+                break;
+              }
+            case "exponentiation":
+              calcParamResult = Math.pow(calcParam1, calcParam2);
+              arithmeticDone = true;
+              break;
+          }
+        }
+
+      }
+    } catch (Exception e) {
+      Optional<String> eMsg = Optional.ofNullable(e.getMessage());
+      exceptionComment.add(eMsg.orElse(""));
+    } finally {
+      Optional<String> OptCalcParam1 = Optional.of(request.getParameter("atai1"));
+      Optional<String> OptCalcParam2 = Optional.of(request.getParameter("atai2"));
+      Optional<String> OptArithmeticOperationParam = Optional.of(request.getParameter("keisan"));
+      String arithmeticOperationParam = OptArithmeticOperationParam.get();
+      String calcSign = serchArithmeticOperation(arithmeticOperationParam);
       if (arithmeticDone) {
+        request.setAttribute("atai1", String.valueOf(OptCalcParam1.get()));
+        request.setAttribute("atai2", String.valueOf(OptCalcParam2.get()));
+        request.setAttribute("kigou", calcSign);
         request.setAttribute("kotae", String.valueOf(calcParamResult));
         sc.getRequestDispatcher("/CalcJSPOK.jsp").forward(request, response);
       } else {
+        request.setAttribute("atai1", String.valueOf(OptCalcParam1.get()));
+        request.setAttribute("atai2", String.valueOf(OptCalcParam2.get()));
+        request.setAttribute("kigou", calcSign);
+        request.setAttribute("comment", String.join("<br>", exceptionComment));
         sc.getRequestDispatcher("/CalcJSPNG.jsp").forward(request, response);
       }
     }
@@ -101,5 +178,9 @@ public class CalcServlet extends HttpServlet {
       }
     }
     return result;
+  }
+
+  private Optional<String> hasAtai(HttpServletRequest request, String param) {
+    return Optional.ofNullable(request.getParameter(param));
   }
 }
