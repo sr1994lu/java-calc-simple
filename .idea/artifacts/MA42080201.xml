@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="MA42080201">
+    <output-path>$PROJECT_DIR$/out/artifacts/MA42080201</output-path>
+    <root id="archive" name="MA42080201.war">
+      <element id="artifact" artifact-name="java-calc-simple:war exploded" />
+    </root>
+  </artifact>
+</component>

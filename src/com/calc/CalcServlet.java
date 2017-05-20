@@ -56,14 +56,17 @@ public class CalcServlet extends HttpServlet {
           // not yet entered
           exceptionComment.add("値1のテキストボックスが未入力です");
           exceptionComment.add("値2のテキストボックスが未入力です");
+          throw new Exception();
 
         } else if (Objects.equals(OptNullabbleCalcParam1, "")) {
           // not yet entered
           exceptionComment.add("値1のテキストボックスが未入力です");
+          throw new Exception();
 
         } else if (Objects.equals(OptNullabbleCalcParam2, "")) {
           // not yet entered
           exceptionComment.add("値2のテキストボックスが未入力です");
+          throw new Exception();
 
         }
 
@@ -110,7 +113,7 @@ public class CalcServlet extends HttpServlet {
               arithmeticDone = true;
               break;
             case "division":
-              calcParamResult = calcParam1 / calcParam2;
+              calcParamResult = (int) calcParam1 / calcParam2;
               arithmeticDone = true;
               if (Double.isInfinite(calcParamResult) || Double.isNaN(calcParamResult)) {
                 exceptionComment.add("0除算はできません");
@@ -120,7 +123,7 @@ public class CalcServlet extends HttpServlet {
                 break;
               }
             case "remainder":
-              calcParamResult = calcParam1 % calcParam2;
+              calcParamResult = (int) calcParam1 % calcParam2;
               arithmeticDone = true;
               if (Double.isInfinite(calcParamResult) || Double.isNaN(calcParamResult)) {
                 exceptionComment.add("0除算はできません");
@@ -135,7 +138,6 @@ public class CalcServlet extends HttpServlet {
               break;
           }
         }
-
       }
     } catch (Exception e) {
       Optional<String> eMsg = Optional.ofNullable(e.getMessage());
